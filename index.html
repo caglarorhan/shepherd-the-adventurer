@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Shepherd's Forest Rescue</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Main Menu Screen -->
+        <div id="main-menu" class="screen active">
+            <div class="menu-content">
+                <h1 class="game-title">🌲 Shepherd's Forest Rescue 🐑</h1>
+                <p class="tagline">Guide the shepherd through the mysterious forest to rescue the lost sheep!</p>
+                <div class="menu-buttons">
+                    <button id="btn-start" class="menu-btn primary">Start Adventure</button>
+                    <button id="btn-continue" class="menu-btn" disabled>Continue</button>
+                    <button id="btn-options" class="menu-btn">Options</button>
+                    <button id="btn-credits" class="menu-btn">Credits</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Select Screen -->
+        <div id="level-select" class="screen">
+            <div class="screen-content">
+                <h2>Select Level</h2>
+                <div class="level-grid">
+                    <button class="level-btn unlocked" data-level="1">
+                        <span class="level-num">1</span>
+                        <span class="level-name">Forest Entrance</span>
+                        <span class="level-sheep">🐑 0/3</span>
+                    </button>
+                    <button class="level-btn locked" data-level="2">
+                        <span class="level-num">2</span>
+                        <span class="level-name">River Crossing</span>
+                        <span class="level-sheep">🔒</span>
+                    </button>
+                    <button class="level-btn locked" data-level="3">
+                        <span class="level-num">3</span>
+                        <span class="level-name">Hazard Path</span>
+                        <span class="level-sheep">🔒</span>
+                    </button>
+                    <button class="level-btn locked" data-level="4">
+                        <span class="level-num">4</span>
+                        <span class="level-name">Deep Woods</span>
+                        <span class="level-sheep">🔒</span>
+                    </button>
+                    <button class="level-btn locked" data-level="5">
+                        <span class="level-num">5</span>
+                        <span class="level-name">Mountain Clearing</span>
+                        <span class="level-sheep">🔒</span>
+                    </button>
+                </div>
+                <button id="btn-back-menu" class="menu-btn">Back to Menu</button>
+            </div>
+        </div>
+
+        <!-- Options Screen -->
+        <div id="options-screen" class="screen">
+            <div class="screen-content">
+                <h2>Options</h2>
+                <div class="option-row">
+                    <label>Music Volume</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="70">
+                </div>
+                <div class="option-row">
+                    <label>Sound Effects</label>
+                    <input type="range" id="sfx-volume" min="0" max="100" value="80">
+                </div>
+                <div class="option-row">
+                    <label>Show Touch Controls</label>
+                    <input type="checkbox" id="touch-controls" checked>
+                </div>
+                <button id="btn-options-back" class="menu-btn">Back</button>
+            </div>
+        </div>
+
+        <!-- Credits Screen -->
+        <div id="credits-screen" class="screen">
+            <div class="screen-content">
+                <h2>Credits</h2>
+                <p>🌲 Shepherd's Forest Rescue 🐑</p>
+                <p>A browser-based platformer adventure</p>
+                <p>Built with HTML5, CSS3, and JavaScript</p>
+                <br>
+                <p>Thank you for playing!</p>
+                <button id="btn-credits-back" class="menu-btn">Back</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <!-- HUD -->
+            <div id="hud">
+                <div class="hud-left">
+                    <div class="hud-item" id="hud-sheep">
+                        <span class="hud-icon">🐑</span>
+                        <span id="sheep-count">0/3</span>
+                    </div>
+                    <div class="hud-item" id="hud-collectibles">
+                        <span class="hud-icon">🍇</span>
+                        <span id="collectible-count">0</span>
+                    </div>
+                </div>
+                <div class="hud-center">
+                    <span id="level-name">Level 1: Forest Entrance</span>
+                </div>
+                <div class="hud-right">
+                    <button id="btn-pause" class="hud-btn">⏸️</button>
+                </div>
+            </div>
+
+            <!-- Game Canvas -->
+            <canvas id="game-canvas"></canvas>
+
+            <!-- Touch Controls (Mobile) -->
+            <div id="touch-controls">
+                <div class="touch-left">
+                    <button class="touch-btn" id="touch-left">◀</button>
+                    <button class="touch-btn" id="touch-right">▶</button>
+                </div>
+                <div class="touch-right">
+                    <button class="touch-btn" id="touch-jump">⬆</button>
+                    <button class="touch-btn" id="touch-action">🤚</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-menu" class="overlay">
+            <div class="overlay-content">
+                <h2>Paused</h2>
+                <button id="btn-resume" class="menu-btn primary">Resume</button>
+                <button id="btn-restart" class="menu-btn">Restart Level</button>
+                <button id="btn-quit" class="menu-btn">Quit to Menu</button>
+            </div>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="level-complete" class="overlay">
+            <div class="overlay-content">
+                <h2>🎉 Level Complete!</h2>
+                <div class="stats">
+                    <p>Sheep Rescued: <span id="stat-sheep">3/3</span></p>
+                    <p>Collectibles: <span id="stat-collectibles">5</span></p>
+                    <p>Golden Wool: <span id="stat-golden">⭐⭐⭐</span></p>
+                </div>
+                <button id="btn-next-level" class="menu-btn primary">Next Level</button>
+                <button id="btn-replay" class="menu-btn">Replay</button>
+                <button id="btn-complete-menu" class="menu-btn">Main Menu</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over" class="overlay">
+            <div class="overlay-content">
+                <h2>😢 Oh No!</h2>
+                <p>The shepherd got lost in the forest...</p>
+                <button id="btn-retry" class="menu-btn primary" tabindex="0">Try Again</button>
+                <button id="btn-gameover-menu" class="menu-btn" tabindex="0">Main Menu</button>
+            </div>
+        </div>
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="overlay">
+            <div class="overlay-content">
+                <h2>Loading...</h2>
+                <div class="loading-bar">
+                    <div id="loading-progress"></div>
+                </div>
+                <p id="loading-text">Preparing the forest...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
