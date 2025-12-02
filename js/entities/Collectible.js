@@ -57,6 +57,15 @@ export class Collectible extends Entity {
                 this.addTag('golden-wool');
                 this.bobSpeed = 6;
                 break;
+            case 'heart':
+                this.color = '#FF1744';
+                this.value = 0;
+                this.healAmount = 1; // Restores 1 heart
+                this.isHeart = true;
+                this.bobSpeed = 5;
+                this.width = 28;
+                this.height = 28;
+                break;
             default:
                 this.color = '#888';
                 this.value = 5;
@@ -73,8 +82,11 @@ export class Collectible extends Entity {
         this.isCollected = true;
         this.isVisible = false;
         
-        // Heal player if applicable
-        if (this.healAmount > 0) {
+        // Heal player hearts if it's a heart collectible
+        if (this.isHeart) {
+            player.healHeart(this.healAmount);
+        } else if (this.healAmount > 0) {
+            // Heal energy for other collectibles
             player.heal(this.healAmount);
         }
         
@@ -114,11 +126,40 @@ export class Collectible extends Entity {
             case 'golden-wool':
                 this.drawGoldenWool(ctx);
                 break;
+            case 'heart':
+                this.drawHeart(ctx);
+                break;
             default:
                 this.drawDefault(ctx);
         }
         
         ctx.restore();
+    }
+    
+    /**
+     * Draw heart
+     */
+    drawHeart(ctx) {
+        ctx.fillStyle = '#FF1744';
+        ctx.beginPath();
+        ctx.moveTo(0, 4);
+        ctx.bezierCurveTo(-10, -6, -14, 2, 0, 12);
+        ctx.bezierCurveTo(14, 2, 10, -6, 0, 4);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.arc(-5, -1, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Glow effect
+        ctx.shadowColor = '#FF1744';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = 'rgba(255,23,68,0.3)';
+        ctx.beginPath();
+        ctx.arc(0, 4, 14, 0, Math.PI * 2);
+        ctx.fill();
     }
     
     /**

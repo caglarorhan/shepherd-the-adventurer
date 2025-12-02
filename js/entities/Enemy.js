@@ -30,6 +30,12 @@ export class Enemy extends Entity {
         this.attackCooldown = 0;
         this.attackRate = 1; // attacks per second
         
+        // Patrol pause behavior
+        this.patrolPauseTime = 0;
+        this.patrolPauseDuration = 2.0; // 2 seconds to pause at each edge
+        this.isPaused = false;
+        this.hasReachedFirstEdge = false; // Track if we've completed first leg
+        
         // State
         this.state = 'patrol'; // patrol, chase, attack, idle
     }
@@ -54,18 +60,41 @@ export class Enemy extends Entity {
      * Patrol behavior
      */
     patrol(dt) {
+        // Handle pause at patrol edges
+        if (this.isPaused) {
+            this.velocityX = 0;
+            this.patrolPauseTime -= dt;
+            
+            if (this.patrolPauseTime <= 0) {
+                this.isPaused = false;
+                // Turn around after pause
+                this.patrolDirection *= -1;
+                this.facingRight = this.patrolDirection > 0;
+            }
+            return;
+        }
+        
         // Move in patrol direction
         this.velocityX = this.patrolDirection * this.moveSpeed;
+        this.facingRight = this.patrolDirection > 0;
         
-        // Check patrol bounds
-        const distFromStart = this.x - this.startX;
+        // Calculate patrol boundaries (left and right edges from spawn point)
+        const leftBound = this.startX - this.patrolRange;
+        const rightBound = this.startX + this.patrolRange;
         
-        if (distFromStart > this.patrolRange) {
-            this.patrolDirection = -1;
-            this.facingRight = false;
-        } else if (distFromStart < -this.patrolRange) {
-            this.patrolDirection = 1;
-            this.facingRight = true;
+        // Check if reached right edge (going right)
+        if (this.patrolDirection > 0 && this.x >= rightBound) {
+            this.x = rightBound; // Clamp to boundary
+            this.isPaused = true;
+            this.patrolPauseTime = this.patrolPauseDuration;
+            this.velocityX = 0;
+        }
+        // Check if reached left edge (going left)  
+        else if (this.patrolDirection < 0 && this.x <= leftBound) {
+            this.x = leftBound; // Clamp to boundary
+            this.isPaused = true;
+            this.patrolPauseTime = this.patrolPauseDuration;
+            this.velocityX = 0;
         }
     }
     

@@ -164,15 +164,15 @@ export class LevelLoader {
         data[17 * width + 39] = 7; // Rock barrier left
         data[17 * width + 49] = 7; // Rock barrier right
         
-        // Stepping stones in river 1
-        for (let x = 17; x < 24; x += 3) {
-            data[17 * width + x] = 4;
-        }
+        // Stepping stones in river 1 (larger - 2 tiles wide each)
+        for (let x = 16; x <= 17; x++) data[17 * width + x] = 4;
+        for (let x = 20; x <= 21; x++) data[17 * width + x] = 4;
+        for (let x = 23; x <= 24; x++) data[17 * width + x] = 4;
         
-        // Stepping stones in river 2
-        for (let x = 42; x < 47; x += 2) {
-            data[16 * width + x] = 4;
-        }
+        // Stepping stones in river 2 (larger - 2 tiles wide each)
+        for (let x = 41; x <= 42; x++) data[17 * width + x] = 4;
+        for (let x = 44; x <= 45; x++) data[17 * width + x] = 4;
+        for (let x = 47; x <= 48; x++) data[17 * width + x] = 4;
         
         // Platforms
         for (let x = 28; x < 35; x++) {
@@ -206,7 +206,8 @@ export class LevelLoader {
                 { x: 350, y: 18 * ts - 40, type: 'herb' },
                 { x: 950, y: 18 * ts - 40, type: 'berry' },
                 { x: 1100, y: 18 * ts - 40, type: 'berry' },
-                { x: 1700, y: 18 * ts - 40, type: 'golden-wool' }
+                { x: 1700, y: 18 * ts - 40, type: 'golden-wool' },
+                { x: 1400, y: 14 * ts - 40, type: 'heart' }  // Heart on platform
             ],
             background: {
                 type: 'forest',
@@ -274,7 +275,8 @@ export class LevelLoader {
                 { x: 450, y: 440, type: 'herb' },
                 { x: 750, y: 500, type: 'berry' },
                 { x: 1000, y: 400, type: 'herb' },
-                { x: 1350, y: 350, type: 'golden-wool' }
+                { x: 1350, y: 350, type: 'golden-wool' },
+                { x: 1200, y: 13 * 32 - 40, type: 'heart' }  // Heart on high platform
             ],
             background: {
                 type: 'forest',
@@ -349,7 +351,8 @@ export class LevelLoader {
                 { x: 950, y: 440, type: 'herb' },
                 { x: 1300, y: 400, type: 'berry' },
                 { x: 1600, y: 350, type: 'golden-wool' },
-                { x: 1900, y: 320, type: 'golden-wool' }
+                { x: 1900, y: 320, type: 'golden-wool' },
+                { x: 1100, y: 13 * 32 - 40, type: 'heart' }  // Heart on platform
             ],
             background: {
                 type: 'dark-forest',
@@ -428,7 +431,9 @@ export class LevelLoader {
                 { x: 1250, y: 400, type: 'herb' },
                 { x: 1450, y: 360, type: 'golden-wool' },
                 { x: 1800, y: 300, type: 'golden-wool' },
-                { x: 2100, y: 260, type: 'golden-wool' }
+                { x: 2100, y: 260, type: 'golden-wool' },
+                { x: 700, y: 11 * 32 - 40, type: 'heart' },  // Heart on cliff ledge
+                { x: 1600, y: 9 * 32 - 40, type: 'heart' }   // Heart near peak
             ],
             background: {
                 type: 'mountain',

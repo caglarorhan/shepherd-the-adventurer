@@ -6,9 +6,9 @@
 
 export class Physics {
     constructor() {
-        this.gravity = 1200; // pixels per second squared
-        this.maxFallSpeed = 500;
-        this.fallGravityMultiplier = 1.5; // Fall faster than rise for better game feel
+        this.gravity = 900; // pixels per second squared (reduced for floatier jumps)
+        this.maxFallSpeed = 450;
+        this.fallGravityMultiplier = 1.3; // Fall faster than rise for better game feel
     }
     
     /**
@@ -159,10 +159,14 @@ export class Physics {
     resolveVerticalCollision(entity, tilemap, solidTiles, tileSize) {
         const bounds = this.getBounds(entity);
         
+        // Use full width for ground detection - no ledge tolerance that causes falling
         const left = Math.floor(bounds.x / tileSize);
         const right = Math.floor((bounds.x + bounds.width - 1) / tileSize);
         const top = Math.floor(bounds.y / tileSize);
         const bottom = Math.floor((bounds.y + bounds.height - 1) / tileSize);
+        
+        // Also check one row below for ground detection when not moving up
+        const groundCheckRow = Math.floor((bounds.y + bounds.height) / tileSize);
         
         for (let row = top; row <= bottom; row++) {
             for (let col = left; col <= right; col++) {
@@ -180,8 +184,8 @@ export class Physics {
                     const newBounds = this.getBounds(entity);
                     
                     if (this.checkAABB(newBounds, { x: tileX, y: tileY, width: tileSize, height: tileSize })) {
-                        if (entity.velocityY > 0) {
-                            // Landing on ground
+                        if (entity.velocityY >= 0) {
+                            // Landing on ground (>= 0 to catch standing still too)
                             entity.y = tileY - (entity.hitboxHeight || entity.height) - (entity.hitboxOffsetY || 0);
                             entity.velocityY = 0;
                             entity.isGrounded = true;
@@ -190,6 +194,30 @@ export class Physics {
                             entity.y = tileY + tileSize - (entity.hitboxOffsetY || 0);
                             entity.velocityY = 0;
                         }
+                    }
+                }
+            }
+        }
+        
+        // Additional ground check - look directly below the entity
+        if (!entity.isGrounded && entity.velocityY >= 0) {
+            for (let col = left; col <= right; col++) {
+                if (groundCheckRow < 0 || groundCheckRow >= tilemap.height || col < 0 || col >= tilemap.width) {
+                    continue;
+                }
+                
+                const tileId = tilemap.data[groundCheckRow * tilemap.width + col];
+                
+                if (solidTiles.includes(tileId)) {
+                    const tileY = groundCheckRow * tileSize;
+                    const feetY = bounds.y + bounds.height;
+                    
+                    // If feet are very close to ground (within 2 pixels), snap to ground
+                    if (feetY >= tileY - 2 && feetY <= tileY + 2) {
+                        entity.y = tileY - (entity.hitboxHeight || entity.height) - (entity.hitboxOffsetY || 0);
+                        entity.velocityY = 0;
+                        entity.isGrounded = true;
+                        break;
                     }
                 }
             }

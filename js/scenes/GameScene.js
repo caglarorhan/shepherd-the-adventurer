@@ -157,6 +157,11 @@ export class GameScene {
         // Handle player input
         this.player.handleInput(this.game.input, dt);
         
+        // Update enemy behavior BEFORE position updates (so velocityX is set)
+        this.enemies.forEach(enemy => {
+            enemy.updateWithPlayer(dt, this.player);
+        });
+        
         // Apply gravity to all entities (except non-rescued sheep)
         this.entities.forEach(entity => {
             if (entity.type !== 'collectible') {
@@ -199,14 +204,9 @@ export class GameScene {
     update(dt, alpha) {
         if (!this.player) return;
         
-        // Update all entities
+        // Update all entities (animations, etc)
         this.entities.forEach(entity => {
             entity.update(dt);
-        });
-        
-        // Update enemies with player reference
-        this.enemies.forEach(enemy => {
-            enemy.updateWithPlayer(dt, this.player);
         });
         
         // Check for nearby interactables
@@ -258,9 +258,15 @@ export class GameScene {
         // Player vs Enemies
         this.enemies.forEach(enemy => {
             if (this.player.collidesWith(enemy) && !this.player.isInvulnerable) {
-                this.player.takeDamage(enemy.damage);
+                this.player.takeDamage(1, enemy); // 1 heart damage, pass enemy for knockback
                 this.game.audio.playHurt();
                 this.game.camera.shake(8, 0.3);
+                this.updateHUD();
+                
+                // Check for death
+                if (this.player.health <= 0) {
+                    this.gameOver();
+                }
             }
         });
     }
@@ -340,6 +346,14 @@ export class GameScene {
         document.getElementById('sheep-count').textContent = `${this.sheepRescued}/${this.totalSheep}`;
         document.getElementById('collectible-count').textContent = this.collectiblesGathered;
         document.getElementById('level-name').textContent = `Level ${this.currentLevel}: ${this.getLevelName()}`;
+        
+        // Update health hearts
+        if (this.player) {
+            const heartsEl = document.getElementById('health-hearts');
+            const fullHearts = this.player.health;
+            const emptyHearts = this.player.maxHealth - this.player.health;
+            heartsEl.textContent = '❤️'.repeat(fullHearts) + '🖤'.repeat(emptyHearts);
+        }
     }
     
     /**

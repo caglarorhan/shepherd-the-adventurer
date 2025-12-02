@@ -21,7 +21,7 @@ export class Player extends Entity {
         
         // Movement properties
         this.moveSpeed = 250;
-        this.jumpForce = 450;
+        this.jumpForce = 520; // Increased for longer jumps
         this.maxJumps = 1; // Set to 2 for double jump
         this.jumpsRemaining = 1;
         
@@ -44,7 +44,11 @@ export class Player extends Entity {
         // Invulnerability
         this.isInvulnerable = false;
         this.invulnerabilityTime = 0;
-        this.invulnerabilityDuration = 1.5;
+        this.invulnerabilityDuration = 3.0; // 3 seconds to escape after damage
+        
+        // Health (hearts)
+        this.health = 3;
+        this.maxHealth = 3;
         
         // Energy
         this.energy = 100;
@@ -183,28 +187,48 @@ export class Player extends Entity {
     }
     
     /**
-     * Take damage
+     * Take damage (reduces hearts)
+     * @param {number} amount - Amount of hearts to lose
+     * @param {Entity} source - Optional source of damage for knockback direction
      */
-    takeDamage(amount = 10) {
+    takeDamage(amount = 1, source = null) {
         if (this.isInvulnerable) return;
         
-        this.energy -= amount;
+        this.health = Math.max(0, this.health - amount);
         this.isInvulnerable = true;
         this.invulnerabilityTime = this.invulnerabilityDuration;
         
-        // Knockback
-        this.velocityY = -200;
+        // Knockback - push player away from damage source
+        this.velocityY = -250;
+        if (source) {
+            // Knock back away from the enemy
+            const knockbackDir = this.centerX > source.centerX ? 1 : -1;
+            this.velocityX = knockbackDir * 200;
+        }
         
-        if (this.energy <= 0) {
+        console.log(`💔 Took damage! Health: ${this.health}/${this.maxHealth}`);
+        
+        if (this.health <= 0) {
             this.die();
         }
     }
     
     /**
-     * Heal
+     * Heal (energy from berries/herbs)
      */
     heal(amount = 20) {
         this.energy = Math.min(this.energy + amount, this.maxEnergy);
+    }
+    
+    /**
+     * Heal hearts (from heart collectibles)
+     */
+    healHeart(amount = 1) {
+        const oldHealth = this.health;
+        this.health = Math.min(this.health + amount, this.maxHealth);
+        if (this.health > oldHealth) {
+            console.log(`❤️ Healed! Health: ${this.health}/${this.maxHealth}`);
+        }
     }
     
     /**
@@ -328,21 +352,6 @@ export class Player extends Entity {
         ctx.fillStyle = '#654321';
         ctx.fillRect(x + 14, y + 54, 8, 10);
         ctx.fillRect(x + 26, y + 54, 8, 10);
-        
-        // Staff (if idle)
-        if (this.state === 'idle') {
-            ctx.strokeStyle = '#8B4513';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(x + 40, y + 10);
-            ctx.lineTo(x + 40, y + 60);
-            ctx.stroke();
-            
-            // Staff hook
-            ctx.beginPath();
-            ctx.arc(x + 36, y + 10, 5, Math.PI, Math.PI * 2);
-            ctx.stroke();
-        }
         
         // Crouch adjustment
         if (this.isCrouching) {

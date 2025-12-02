@@ -39,6 +39,16 @@
     box-shadow: var(--shadow-soft);
 }
 
+#hud-health {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.4rem 0.6rem;
+}
+
+#health-hearts {
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+}
+
 .hud-icon {
     font-size: 1.2rem;
 }
