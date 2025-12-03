@@ -113,9 +113,12 @@ export class Game {
         // Define assets to load
         const imagesToLoad = {
             // Player sprites
-            'shepherd-idle': 'assets/sprites/shepherd/idle.png',
-            'shepherd-run': 'assets/sprites/shepherd/run.png',
+            'shepherd-idle': 'assets/sprites/shepherd/idle.gif',
+            'shepherd-run': 'assets/sprites/shepherd/run.gif',
             'shepherd-jump': 'assets/sprites/shepherd/jump.png',
+            'shepherd-landing': 'assets/sprites/shepherd/landing.png',
+            'shepherd-midair': 'assets/sprites/shepherd/mid air.gif',
+            'shepherd-ledge': 'assets/sprites/shepherd/ledge grab.gif',
             
             // Sheep sprites
             'sheep-idle': 'assets/sprites/sheep/idle.png',
@@ -150,12 +153,11 @@ export class Game {
             'sfx-hurt': 'assets/audio/sfx/hurt.wav',
         };
         
-        // For now, we'll use placeholder graphics
-        // In production, uncomment the asset loading
-        // await this.assets.loadImages(imagesToLoad);
+        // Load the actual assets
+        await this.assets.loadImages(imagesToLoad);
         // await this.assets.loadAudio(audioToLoad);
         
-        console.log('✅ Assets loaded (using placeholders)');
+        console.log('✅ Assets loaded');
     }
     
     /**

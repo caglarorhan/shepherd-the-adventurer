@@ -92,8 +92,8 @@ export class GameScene {
         // Setup backgrounds
         this.setupBackgrounds(levelData.background);
         
-        // Spawn player
-        this.player = new Player(levelData.playerSpawn.x, levelData.playerSpawn.y);
+        // Spawn player with assets reference
+        this.player = new Player(levelData.playerSpawn.x, levelData.playerSpawn.y, this.game.assets);
         this.entities.push(this.player);
         
         // Spawn sheep

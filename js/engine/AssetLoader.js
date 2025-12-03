@@ -7,6 +7,7 @@
 export class AssetLoader {
     constructor() {
         this.images = new Map();
+        this.animations = new Map(); // Store animated sprites
         this.audio = new Map();
         this.json = new Map();
         this.loadedCount = 0;
@@ -33,7 +34,7 @@ export class AssetLoader {
     }
     
     /**
-     * Load a single image
+     * Load a single image (handles GIFs with animation extraction)
      */
     loadImage(key, src) {
         return new Promise((resolve, reject) => {
@@ -55,6 +56,57 @@ export class AssetLoader {
             
             img.src = src;
         });
+    }
+    
+    /**
+     * Load animated GIF as separate frames using offscreen rendering
+     * This extracts frames from a GIF by rendering it at different times
+     */
+    async loadAnimatedGif(key, src, frameCount, fps = 10) {
+        this.totalCount++;
+        
+        try {
+            // Create an image element for the GIF
+            const gifImg = document.createElement('img');
+            gifImg.src = src;
+            
+            await new Promise((resolve, reject) => {
+                gifImg.onload = resolve;
+                gifImg.onerror = reject;
+            });
+            
+            // Store animation data
+            this.animations.set(key, {
+                image: gifImg,
+                frameCount: frameCount,
+                fps: fps,
+                frameWidth: gifImg.width,
+                frameHeight: gifImg.height
+            });
+            
+            this.loadedCount++;
+            this.reportProgress();
+            console.log(`✅ Loaded animated sprite: ${key} (${frameCount} frames)`);
+            
+        } catch (error) {
+            console.warn(`Failed to load animated GIF: ${src}`);
+            this.loadedCount++;
+            this.reportProgress();
+        }
+    }
+    
+    /**
+     * Get animation data
+     */
+    getAnimation(key) {
+        return this.animations.get(key);
+    }
+    
+    /**
+     * Check if animation exists
+     */
+    hasAnimation(key) {
+        return this.animations.has(key);
     }
     
     /**

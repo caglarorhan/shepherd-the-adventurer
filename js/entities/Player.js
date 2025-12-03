@@ -7,8 +7,15 @@
 import { Entity } from './Entity.js';
 
 export class Player extends Entity {
-    constructor(x, y) {
+    constructor(x, y, assets = null) {
         super(x, y, 48, 64);
+        
+        // Store reference to assets for sprite rendering
+        this.assets = assets;
+        
+        // GIF animation elements (for animated GIFs)
+        this.gifElements = {};
+        this.initGifElements();
         
         this.type = 'player';
         this.addTag('player');
@@ -67,6 +74,29 @@ export class Player extends Entity {
         };
         
         this.setAnimation('idle');
+    }
+    
+    /**
+     * Initialize GIF elements for animation
+     * Creates hidden img elements that animate independently
+     */
+    initGifElements() {
+        const gifSprites = {
+            'idle': 'assets/sprites/shepherd/idle.gif',
+            'run': 'assets/sprites/shepherd/run.gif',
+            'midair': 'assets/sprites/shepherd/mid air.gif',
+            'ledge': 'assets/sprites/shepherd/ledge grab.gif'
+        };
+        
+        for (const [key, src] of Object.entries(gifSprites)) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.style.position = 'absolute';
+            img.style.left = '-9999px';
+            img.style.top = '-9999px';
+            document.body.appendChild(img);
+            this.gifElements[key] = img;
+        }
     }
     
     /**
@@ -317,10 +347,49 @@ export class Player extends Entity {
             ctx.translate(-(pos.x + this.width / 2), 0);
         }
         
-        // Draw placeholder shepherd
-        this.drawPlaceholder(ctx, pos.x, pos.y);
+        // Try to draw sprite, fall back to placeholder
+        if (!this.drawSprite(ctx, pos.x, pos.y)) {
+            this.drawPlaceholder(ctx, pos.x, pos.y);
+        }
         
         ctx.restore();
+    }
+    
+    /**
+     * Draw the appropriate sprite based on current state
+     * @returns {boolean} true if sprite was drawn, false to use placeholder
+     */
+    drawSprite(ctx, x, y) {
+        // Determine which GIF element to use based on state
+        let gifKey;
+        switch (this.state) {
+            case 'run':
+                gifKey = 'run';
+                break;
+            case 'jump':
+                gifKey = 'midair'; // Use midair for jumping up too
+                break;
+            case 'fall':
+                gifKey = 'midair';
+                break;
+            default:
+                gifKey = 'idle';
+        }
+        
+        const gifElement = this.gifElements[gifKey];
+        if (!gifElement || !gifElement.complete || gifElement.naturalWidth === 0) {
+            return false;
+        }
+        
+        // Draw the GIF element to canvas (captures current animation frame)
+        const scale = Math.min(this.width / gifElement.naturalWidth, this.height / gifElement.naturalHeight) * 1.5;
+        const drawWidth = gifElement.naturalWidth * scale;
+        const drawHeight = gifElement.naturalHeight * scale;
+        const offsetX = (this.width - drawWidth) / 2;
+        const offsetY = this.height - drawHeight; // Align to bottom
+        
+        ctx.drawImage(gifElement, x + offsetX, y + offsetY, drawWidth, drawHeight);
+        return true;
     }
     
     /**
