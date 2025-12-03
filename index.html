@@ -4,6 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Shepherd's Forest Rescue</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Shepherd's Forest Rescue - 2D Platformer Game">
+    <meta name="description" content="Guide a brave shepherd through enchanted forest levels to rescue lost sheep while avoiding wolves and dangers. A fun 2D platformer built with vanilla JavaScript!">
+    <meta name="keywords" content="game, platformer, 2D game, JavaScript game, browser game, shepherd, sheep rescue, indie game">
+    <meta name="author" content="Shepherd's Forest Rescue">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://caglarorhan.github.io/shepherd-the-adventurer/">
+    <meta property="og:title" content="Shepherd's Forest Rescue - 2D Platformer Game">
+    <meta property="og:description" content="Guide a brave shepherd through enchanted forest levels to rescue lost sheep while avoiding wolves and dangers. A fun 2D platformer built with vanilla JavaScript!">
+    <meta property="og:image" content="https://caglarorhan.github.io/shepherd-the-adventurer/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Shepherd's Forest Rescue">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://caglarorhan.github.io/shepherd-the-adventurer/">
+    <meta property="twitter:title" content="Shepherd's Forest Rescue - 2D Platformer Game">
+    <meta property="twitter:description" content="Guide a brave shepherd through enchanted forest levels to rescue lost sheep while avoiding wolves and dangers. A fun 2D platformer built with vanilla JavaScript!">
+    <meta property="twitter:image" content="https://caglarorhan.github.io/shepherd-the-adventurer/assets/og-image.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#2d5a27">
+    
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/ui.css">
 </head>
@@ -118,17 +149,17 @@
 
             <!-- Game Canvas -->
             <canvas id="game-canvas"></canvas>
+        </div>
 
-            <!-- Touch Controls (Mobile) -->
-            <div id="touch-controls">
-                <div class="touch-dpad">
-                    <button class="touch-btn" id="btn-touch-left">◀</button>
-                    <button class="touch-btn" id="btn-touch-right">▶</button>
-                </div>
-                <div class="touch-actions">
-                    <button class="touch-btn" id="btn-touch-jump">⬆</button>
-                    <button class="touch-btn" id="btn-touch-action">🤚</button>
-                </div>
+        <!-- Touch Controls (Mobile) - Outside game-screen for proper z-index -->
+        <div id="touch-controls">
+            <div class="touch-dpad">
+                <button class="touch-btn" id="btn-touch-left">◀</button>
+                <button class="touch-btn" id="btn-touch-right">▶</button>
+            </div>
+            <div class="touch-actions">
+                <button class="touch-btn" id="btn-touch-jump">⬆</button>
+                <button class="touch-btn" id="btn-touch-action">🤚</button>
             </div>
         </div>
 

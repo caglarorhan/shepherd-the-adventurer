@@ -265,10 +265,36 @@ export class UIManager {
                     this.hideOverlay('loading-screen');
                     this.game.scenes.switchTo('game', { level: levelNum });
                     this.game.start();
+                    
+                    // Show touch controls if on touch device
+                    this.showTouchControls();
                 }, 300);
             }
             document.getElementById('loading-progress').style.width = progress + '%';
         }, 100);
+    }
+    
+    /**
+     * Show touch controls for mobile devices
+     */
+    showTouchControls() {
+        const isTouchDevice = ('ontouchstart' in window) || 
+                              (navigator.maxTouchPoints > 0);
+        const touchControls = document.getElementById('touch-controls');
+        
+        if (touchControls && isTouchDevice) {
+            touchControls.classList.add('active');
+        }
+    }
+    
+    /**
+     * Hide touch controls
+     */
+    hideTouchControls() {
+        const touchControls = document.getElementById('touch-controls');
+        if (touchControls) {
+            touchControls.classList.remove('active');
+        }
     }
     
     /**
@@ -287,6 +313,7 @@ export class UIManager {
      */
     quitToMenu() {
         this.game.stop();
+        this.hideTouchControls();
         this.showScreen('main-menu');
         this.updateContinueButton();
         this.updateLevelButtons();

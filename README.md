@@ -2,6 +2,20 @@
 
 A 2D side-scrolling platformer game built with vanilla JavaScript, HTML5 Canvas, and CSS3.
 
+## 📸 Screenshots
+
+### Main Menu
+![Main Menu](assets/screenshots/MainMenu.PNG)
+
+### Level Selection
+![Level Selection](assets/screenshots/Levels.PNG)
+
+### Gameplay - Forest Entrance (Level 1)
+![Level 1 Gameplay](assets/screenshots/Level-1.PNG)
+
+### Gameplay - Mountain Clearing (Level 5)
+![Level 5 Gameplay](assets/screenshots/Level-5.PNG)
+
 ## 🎮 About
 
 Shepherd's Forest Rescue is a browser-based adventure where players guide a young shepherd through a mysterious forest to find and rescue sheep that have wandered too far from the pasture. The forest is filled with natural hazards, wild animals, and environmental puzzles.

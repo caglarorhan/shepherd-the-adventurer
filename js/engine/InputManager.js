@@ -139,100 +139,65 @@ export class InputManager {
      * Setup touch control buttons
      */
     setupTouchControls() {
-        const touchButtons = {
-            'btn-touch-left': 'left',
-            'btn-touch-right': 'right',
-            'btn-touch-jump': 'jump',
-            'btn-touch-action': 'action'
-        };
+        const buttonMappings = [
+            { id: 'btn-touch-left', action: 'left' },
+            { id: 'btn-touch-right', action: 'right' },
+            { id: 'btn-touch-jump', action: 'jump' },
+            { id: 'btn-touch-action', action: 'action' }
+        ];
         
-        // Track jump specifically for better responsiveness
-        this.jumpTouchActive = false;
-        
-        Object.entries(touchButtons).forEach(([id, action]) => {
+        buttonMappings.forEach(({ id, action }) => {
             const btn = document.getElementById(id);
-            if (btn) {
-                // Handle touch start
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Set pressed flag (will be read next frame)
-                    this.touchButtonsPressed[action] = true;
-                    this.touchButtons[action] = true;
-                    
-                    // Special handling for jump - queue it
-                    if (action === 'jump') {
-                        this.jumpTouchQueued = true;
-                    }
-                    
-                    btn.classList.add('pressed');
-                    console.log(`Touch ${action} pressed`);
-                }, { passive: false });
-                
-                // Handle touch end
-                btn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.touchButtons[action] = false;
-                    this.touchButtonsReleased[action] = true;
-                    btn.classList.remove('pressed');
-                }, { passive: false });
-                
-                // Handle touch cancel
-                btn.addEventListener('touchcancel', (e) => {
-                    e.preventDefault();
-                    this.touchButtons[action] = false;
-                    btn.classList.remove('pressed');
-                }, { passive: false });
-                
-                // Handle touch leave (finger moves off button)
-                btn.addEventListener('touchmove', (e) => {
-                    const touch = e.touches[0];
-                    if (!touch) return;
-                    const rect = btn.getBoundingClientRect();
-                    const isInside = touch.clientX >= rect.left && 
-                                    touch.clientX <= rect.right &&
-                                    touch.clientY >= rect.top && 
-                                    touch.clientY <= rect.bottom;
-                    
-                    if (!isInside && this.touchButtons[action]) {
-                        this.touchButtons[action] = false;
-                        btn.classList.remove('pressed');
-                    } else if (isInside && !this.touchButtons[action]) {
-                        this.touchButtons[action] = true;
-                        btn.classList.add('pressed');
-                    }
-                }, { passive: false });
-                
-                // Also support mouse for testing on desktop
-                btn.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    this.touchButtonsPressed[action] = true;
-                    this.touchButtons[action] = true;
-                    if (action === 'jump') {
-                        this.jumpTouchQueued = true;
-                    }
-                    btn.classList.add('pressed');
-                });
-                
-                btn.addEventListener('mouseup', (e) => {
-                    e.preventDefault();
-                    this.touchButtons[action] = false;
-                    this.touchButtonsReleased[action] = true;
-                    btn.classList.remove('pressed');
-                });
-                
-                btn.addEventListener('mouseleave', (e) => {
-                    if (this.touchButtons[action]) {
-                        this.touchButtons[action] = false;
-                        btn.classList.remove('pressed');
-                    }
-                });
-            } else {
+            if (!btn) {
                 console.warn(`Touch button not found: ${id}`);
+                return;
             }
+            
+            // Touch events
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.touchButtons[action] = true;
+                this.touchButtonsPressed[action] = true;
+                if (action === 'jump') this.jumpTouchQueued = true;
+                btn.classList.add('pressed');
+            }, { passive: false });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.touchButtons[action] = false;
+                this.touchButtonsReleased[action] = true;
+                btn.classList.remove('pressed');
+            }, { passive: false });
+            
+            btn.addEventListener('touchcancel', (e) => {
+                this.touchButtons[action] = false;
+                btn.classList.remove('pressed');
+            }, { passive: false });
+            
+            // Mouse events for desktop testing
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.touchButtons[action] = true;
+                this.touchButtonsPressed[action] = true;
+                if (action === 'jump') this.jumpTouchQueued = true;
+                btn.classList.add('pressed');
+            });
+            
+            btn.addEventListener('mouseup', (e) => {
+                this.touchButtons[action] = false;
+                this.touchButtonsReleased[action] = true;
+                btn.classList.remove('pressed');
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                if (this.touchButtons[action]) {
+                    this.touchButtons[action] = false;
+                    btn.classList.remove('pressed');
+                }
+            });
         });
+        
+        console.log('👆 Touch controls initialized');
     }
     
     /**

@@ -91,15 +91,15 @@
 
 /* Touch Controls */
 #touch-controls {
-    position: absolute;
-    bottom: 0;
+    position: fixed;
+    bottom: 20px;
     left: 0;
     right: 0;
     display: none;
     justify-content: space-between;
-    padding: 1.5rem;
+    padding: 0 20px;
     pointer-events: none;
-    z-index: 50;
+    z-index: 100;
 }
 
 #touch-controls.active {
@@ -108,23 +108,22 @@
 
 .touch-dpad, .touch-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 10px;
     pointer-events: auto;
 }
 
 .touch-btn {
     width: 70px;
     height: 70px;
-    border: 3px solid rgba(255, 255, 255, 0.8);
+    border: 3px solid rgba(255, 255, 255, 0.9);
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     color: white;
     cursor: pointer;
-    font-size: 1.8rem;
+    font-size: 24px;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.1s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     user-select: none;
     -webkit-user-select: none;
@@ -134,10 +133,9 @@
 
 .touch-btn:active,
 .touch-btn.pressed {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.7);
     border-color: white;
-    transform: scale(0.92);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transform: scale(0.9);
 }
 
 /* Notification Toast */
