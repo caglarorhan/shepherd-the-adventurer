@@ -34,7 +34,8 @@ export class Enemy extends Entity {
         this.patrolPauseTime = 0;
         this.patrolPauseDuration = 2.0; // 2 seconds to pause at each edge
         this.isPaused = false;
-        this.hasReachedFirstEdge = false; // Track if we've completed first leg
+        this.lastX = x; // Track last position to detect being blocked
+        this.blockedTime = 0; // Time spent blocked by obstacle
         
         // State
         this.state = 'patrol'; // patrol, chase, attack, idle
@@ -45,8 +46,11 @@ export class Enemy extends Entity {
      */
     detectPlayer(player) {
         const distance = this.distanceTo(player);
+        const verticalDiff = Math.abs(player.y - this.y);
         
-        if (distance < this.detectionRange) {
+        // Only detect if player is within range AND on similar vertical level
+        // (within 64 pixels vertically - about 2 tiles)
+        if (distance < this.detectionRange && verticalDiff < 64) {
             this.isAlerted = true;
             this.target = player;
             this.state = 'chase';
@@ -67,6 +71,7 @@ export class Enemy extends Entity {
             
             if (this.patrolPauseTime <= 0) {
                 this.isPaused = false;
+                this.blockedTime = 0;
                 // Turn around after pause
                 this.patrolDirection *= -1;
                 this.facingRight = this.patrolDirection > 0;
@@ -81,6 +86,24 @@ export class Enemy extends Entity {
         // Calculate patrol boundaries (left and right edges from spawn point)
         const leftBound = this.startX - this.patrolRange;
         const rightBound = this.startX + this.patrolRange;
+        
+        // Check if blocked by obstacle (position not changing despite having velocity)
+        const isBlocked = Math.abs(this.x - this.lastX) < 0.5 && Math.abs(this.velocityX) > 10;
+        if (isBlocked) {
+            this.blockedTime += dt;
+            // If blocked for more than 0.1 seconds, treat as reaching edge
+            if (this.blockedTime > 0.1) {
+                this.isPaused = true;
+                this.patrolPauseTime = this.patrolPauseDuration;
+                this.velocityX = 0;
+                this.blockedTime = 0;
+            }
+        } else {
+            this.blockedTime = 0;
+        }
+        
+        // Update last position for next frame
+        this.lastX = this.x;
         
         // Check if reached right edge (going right)
         if (this.patrolDirection > 0 && this.x >= rightBound) {
@@ -104,6 +127,22 @@ export class Enemy extends Entity {
     chase(player, dt) {
         const dx = player.centerX - this.centerX;
         const distance = this.distanceTo(player);
+        const verticalDiff = Math.abs(player.y - this.y);
+        
+        // If player is on a different level (platform above/below), stop and watch
+        if (verticalDiff > 64) {
+            this.velocityX = 0;
+            // Face the player's direction but don't move
+            this.facingRight = dx > 0;
+            
+            // Give up if player stays out of reach for a while
+            if (distance > this.detectionRange * 1.5) {
+                this.isAlerted = false;
+                this.target = null;
+                this.state = 'patrol';
+            }
+            return;
+        }
         
         // Update facing
         this.facingRight = dx > 0;

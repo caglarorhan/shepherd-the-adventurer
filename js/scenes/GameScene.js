@@ -83,6 +83,12 @@ export class GameScene {
         // Create tilemap
         this.tilemap = levelData.tilemap;
         
+        // Store player spawn position for respawning
+        this.playerSpawn = levelData.playerSpawn;
+        
+        // Initialize parallax background layers
+        this.initParallaxLayers();
+        
         // Setup backgrounds
         this.setupBackgrounds(levelData.background);
         
@@ -194,6 +200,9 @@ export class GameScene {
             }
         });
         
+        // Enforce world boundaries (prevent falling off edges)
+        this.enforceWorldBoundaries();
+        
         // Check entity collisions
         this.checkCollisions();
     }
@@ -231,14 +240,24 @@ export class GameScene {
      * Check collisions between entities
      */
     checkCollisions() {
-        // Player vs Sheep
+        // Player vs Sheep - no physical collision, just interaction
         this.sheep.forEach(sheep => {
-            if (!sheep.isRescued && this.player.collidesWith(sheep)) {
+            const distance = this.player.distanceTo(sheep);
+            
+            if (!sheep.isRescued && distance < 60) {
                 sheep.showInteractionHint = true;
                 this.player.nearbyInteractable = sheep;
                 this.player.canInteract = true;
             } else {
                 sheep.showInteractionHint = false;
+            }
+            
+            // Prevent rescued sheep from overlapping with player
+            if (sheep.isRescued && this.player.collidesWith(sheep)) {
+                // Push sheep away from player
+                const dx = sheep.centerX - this.player.centerX;
+                const pushDir = dx >= 0 ? 1 : -1;
+                sheep.x += pushDir * 5; // Gentle push
             }
         });
         
@@ -266,6 +285,112 @@ export class GameScene {
                 // Check for death
                 if (this.player.health <= 0) {
                     this.gameOver();
+                }
+            }
+        });
+        
+        // Check water hazards (tile 6 = water)
+        this.checkWaterHazard();
+    }
+    
+    /**
+     * Enforce world boundaries - prevent entities from going off edges
+     */
+    enforceWorldBoundaries() {
+        const worldWidth = this.tilemap.width * this.tilemap.tileSize;
+        const worldHeight = this.tilemap.height * this.tilemap.tileSize;
+        const margin = 32; // Keep entities this far from edges
+        
+        // Player boundaries
+        if (this.player) {
+            // Left edge
+            if (this.player.x < margin) {
+                this.player.x = margin;
+                this.player.velocityX = 0;
+            }
+            // Right edge
+            if (this.player.x + this.player.width > worldWidth - margin) {
+                this.player.x = worldWidth - margin - this.player.width;
+                this.player.velocityX = 0;
+            }
+            // Bottom (death pit)
+            if (this.player.y > worldHeight) {
+                if (!this.player.isInvulnerable) {
+                    this.player.takeDamage(1);
+                    // Respawn at last safe position or start
+                    this.player.x = this.playerSpawn.x;
+                    this.player.y = this.playerSpawn.y;
+                    this.player.velocityX = 0;
+                    this.player.velocityY = 0;
+                    
+                    if (this.player.health <= 0) {
+                        this.gameOver();
+                    }
+                }
+            }
+        }
+        
+        // Enemies and sheep boundaries
+        this.entities.forEach(entity => {
+            if (entity.type === 'enemy' || (entity.type === 'sheep' && entity.isRescued)) {
+                // Left edge
+                if (entity.x < margin) {
+                    entity.x = margin;
+                    entity.velocityX = 0;
+                }
+                // Right edge
+                if (entity.x + entity.width > worldWidth - margin) {
+                    entity.x = worldWidth - margin - entity.width;
+                    entity.velocityX = 0;
+                }
+            }
+        });
+    }
+    
+    /**
+     * Check if player or sheep fell in water
+     */
+    checkWaterHazard() {
+        const tileSize = this.tilemap.tileSize;
+        
+        // Check player
+        const playerTileX = Math.floor(this.player.centerX / tileSize);
+        const playerTileY = Math.floor((this.player.y + this.player.height) / tileSize);
+        
+        if (playerTileY >= 0 && playerTileY < this.tilemap.height && 
+            playerTileX >= 0 && playerTileX < this.tilemap.width) {
+            const tileId = this.tilemap.data[playerTileY * this.tilemap.width + playerTileX];
+            if (tileId === 6) { // Water tile
+                // Player fell in water - take damage and respawn at last safe position
+                if (!this.player.isInvulnerable) {
+                    this.player.takeDamage(1);
+                    this.player.velocityY = -400; // Bounce out
+                    this.player.velocityX = this.player.facingRight ? -200 : 200; // Push back
+                    this.game.audio.playHurt();
+                    this.game.camera.shake(10, 0.3);
+                    this.updateHUD();
+                    
+                    if (this.player.health <= 0) {
+                        this.gameOver();
+                    }
+                }
+            }
+        }
+        
+        // Check rescued sheep
+        this.sheep.forEach(sheep => {
+            if (!sheep.isRescued) return;
+            
+            const sheepTileX = Math.floor(sheep.centerX / tileSize);
+            const sheepTileY = Math.floor((sheep.y + sheep.height) / tileSize);
+            
+            if (sheepTileY >= 0 && sheepTileY < this.tilemap.height && 
+                sheepTileX >= 0 && sheepTileX < this.tilemap.width) {
+                const tileId = this.tilemap.data[sheepTileY * this.tilemap.width + sheepTileX];
+                if (tileId === 6) { // Water tile
+                    // Sheep fell in water - bounce it out
+                    sheep.velocityY = -350;
+                    sheep.velocityX = sheep.facingRight ? -150 : 150;
                 }
             }
         });
@@ -438,91 +563,155 @@ export class GameScene {
     }
     
     /**
-     * Render parallax backgrounds
+     * Render parallax backgrounds - simple horizontal scrolling layers
      */
     renderBackgrounds(ctx, camX, camY) {
         const width = this.game.width;
         const height = this.game.height;
         
         // Round camera positions to prevent jitter
-        camX = Math.round(camX);
-        camY = Math.round(camY);
+        const scrollX = Math.round(camX);
         
         // Sky gradient (fixed, doesn't scroll)
         const skyGradient = ctx.createLinearGradient(camX, camY, camX, camY + height);
         skyGradient.addColorStop(0, '#87CEEB');
-        skyGradient.addColorStop(0.5, '#98D8C8');
+        skyGradient.addColorStop(0.5, '#B0E0E6');
         skyGradient.addColorStop(1, '#F7DC6F');
         ctx.fillStyle = skyGradient;
         ctx.fillRect(camX, camY, width, height);
         
-        // Draw sun (fixed position)
+        // Draw sun (fixed position relative to camera)
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
         ctx.arc(camX + width - 100, camY + 80, 40, 0, Math.PI * 2);
         ctx.fill();
         
-        // Far mountains (use rounded parallax to prevent jitter)
+        // Layer 1: Far mountains (slowest - 10% scroll speed)
+        ctx.fillStyle = '#8BA58B';
+        this.drawParallaxLayer(ctx, camX, camY, width, height, scrollX * 0.1, 0.35, this.farMountains);
+        
+        // Layer 2: Mid mountains (20% scroll speed)
         ctx.fillStyle = '#6B8E6B';
-        this.drawMountains(ctx, Math.round(camX * 0.1), camY + height * 0.4, width, height * 0.3);
+        this.drawParallaxLayer(ctx, camX, camY, width, height, scrollX * 0.2, 0.45, this.midMountains);
+        
+        // Layer 3: Near mountains (35% scroll speed)
+        ctx.fillStyle = '#4A7A4A';
+        this.drawParallaxLayer(ctx, camX, camY, width, height, scrollX * 0.35, 0.55, this.nearMountains);
+        
+        // Layer 4: Far trees (50% scroll speed)
+        ctx.fillStyle = '#3D6B3D';
+        this.drawParallaxLayer(ctx, camX, camY, width, height, scrollX * 0.5, 0.65, this.farTrees);
+        
+        // Layer 5: Near trees (70% scroll speed)
+        ctx.fillStyle = '#2D5A2D';
+        this.drawParallaxLayer(ctx, camX, camY, width, height, scrollX * 0.7, 0.75, this.nearTrees);
+    }
+    
+    /**
+     * Initialize parallax layer data (called once per level)
+     */
+    initParallaxLayers() {
+        // Pre-generate static mountain/tree shapes that tile seamlessly
+        const layerWidth = 800; // Width of one repeating segment
+        
+        // Far mountains - big smooth peaks
+        this.farMountains = this.generateMountainLayer(layerWidth, 0.2, [
+            { x: 0, h: 0.3 }, { x: 100, h: 0.7 }, { x: 200, h: 0.4 },
+            { x: 300, h: 0.9 }, { x: 450, h: 0.5 }, { x: 550, h: 0.75 },
+            { x: 650, h: 0.35 }, { x: 750, h: 0.6 }, { x: 800, h: 0.3 }
+        ]);
+        
+        // Mid mountains
+        this.midMountains = this.generateMountainLayer(layerWidth, 0.18, [
+            { x: 0, h: 0.4 }, { x: 80, h: 0.8 }, { x: 160, h: 0.5 },
+            { x: 250, h: 0.95 }, { x: 350, h: 0.6 }, { x: 430, h: 0.85 },
+            { x: 530, h: 0.45 }, { x: 620, h: 0.7 }, { x: 720, h: 0.55 },
+            { x: 800, h: 0.4 }
+        ]);
         
         // Near mountains
-        ctx.fillStyle = '#4A7A4A';
-        this.drawMountains(ctx, Math.round(camX * 0.3), camY + height * 0.5, width, height * 0.3);
+        this.nearMountains = this.generateMountainLayer(layerWidth, 0.15, [
+            { x: 0, h: 0.5 }, { x: 60, h: 0.85 }, { x: 130, h: 0.6 },
+            { x: 200, h: 1.0 }, { x: 280, h: 0.55 }, { x: 360, h: 0.9 },
+            { x: 440, h: 0.65 }, { x: 520, h: 0.8 }, { x: 600, h: 0.5 },
+            { x: 680, h: 0.75 }, { x: 760, h: 0.6 }, { x: 800, h: 0.5 }
+        ]);
         
-        // Far trees
-        ctx.fillStyle = '#3D6B3D';
-        this.drawTreeLine(ctx, Math.round(camX * 0.5), camY + height * 0.6, width, height * 0.2);
+        // Far trees - triangle shapes
+        this.farTrees = this.generateTreeLayer(layerWidth, 0.12, 45);
+        
+        // Near trees - bigger triangles
+        this.nearTrees = this.generateTreeLayer(layerWidth, 0.1, 35);
     }
     
     /**
-     * Draw mountain silhouette (deterministic - no random)
+     * Generate mountain layer data
      */
-    drawMountains(ctx, offsetX, y, width, height) {
-        ctx.beginPath();
-        ctx.moveTo(offsetX, y + height);
-        
-        let x = offsetX;
-        let seed = 0;
-        while (x < offsetX + width + 200) {
-            // Use deterministic pseudo-random based on position
-            seed = (seed + 1) * 17 % 100;
-            const peakHeight = height * (0.5 + Math.sin(x * 0.01) * 0.5);
-            ctx.lineTo(x, y + height - peakHeight);
-            x += 80 + (seed % 40);
-        }
-        
-        ctx.lineTo(x, y + height);
-        ctx.closePath();
-        ctx.fill();
+    generateMountainLayer(layerWidth, heightScale, peaks) {
+        return { width: layerWidth, heightScale, peaks };
     }
     
     /**
-     * Draw tree line silhouette (deterministic - no random)
+     * Generate tree layer data
      */
-    drawTreeLine(ctx, offsetX, y, width, height) {
-        ctx.beginPath();
-        ctx.moveTo(offsetX, y + height);
+    generateTreeLayer(layerWidth, heightScale, spacing) {
+        const trees = [];
+        for (let x = 0; x < layerWidth; x += spacing) {
+            trees.push({ x: x, h: 0.5 + Math.sin(x * 0.1) * 0.3 });
+        }
+        return { width: layerWidth, heightScale, trees, spacing };
+    }
+    
+    /**
+     * Draw a parallax layer with horizontal tiling
+     */
+    drawParallaxLayer(ctx, camX, camY, viewWidth, viewHeight, offsetX, yPosition, layerData) {
+        if (!layerData) return;
         
-        let x = offsetX;
-        let seed = 0;
-        while (x < offsetX + width + 100) {
-            const treeHeight = height * (0.6 + Math.sin(x * 0.05) * 0.4);
+        const layerWidth = layerData.width;
+        const layerHeight = viewHeight * layerData.heightScale;
+        const baseY = camY + viewHeight * yPosition;
+        
+        // Calculate which tiles are visible
+        const startTile = Math.floor(offsetX / layerWidth);
+        const endTile = Math.ceil((offsetX + viewWidth) / layerWidth);
+        
+        ctx.beginPath();
+        
+        for (let tile = startTile; tile <= endTile; tile++) {
+            const tileX = camX + (tile * layerWidth) - offsetX;
             
-            // Tree shape
-            ctx.lineTo(x, y + height - treeHeight);
-            ctx.lineTo(x + 15, y + height - treeHeight * 0.7);
-            ctx.lineTo(x + 10, y + height - treeHeight * 0.7);
-            ctx.lineTo(x + 25, y + height - treeHeight * 0.4);
-            ctx.lineTo(x + 20, y + height - treeHeight * 0.4);
-            ctx.lineTo(x + 30, y + height);
-            
-            // Use deterministic spacing
-            seed = (seed + 1) * 13 % 100;
-            x += 40 + (seed % 20);
+            if (layerData.peaks) {
+                // Draw mountains
+                if (tile === startTile) {
+                    ctx.moveTo(tileX, baseY + layerHeight);
+                }
+                
+                layerData.peaks.forEach(peak => {
+                    ctx.lineTo(tileX + peak.x, baseY + layerHeight - (peak.h * layerHeight));
+                });
+            } else if (layerData.trees) {
+                // Draw trees
+                if (tile === startTile) {
+                    ctx.moveTo(tileX, baseY + layerHeight);
+                }
+                
+                layerData.trees.forEach(tree => {
+                    const treeX = tileX + tree.x;
+                    const treeH = tree.h * layerHeight;
+                    const treeW = layerData.spacing * 0.4;
+                    
+                    // Simple triangle tree
+                    ctx.lineTo(treeX, baseY + layerHeight);
+                    ctx.lineTo(treeX + treeW / 2, baseY + layerHeight - treeH);
+                    ctx.lineTo(treeX + treeW, baseY + layerHeight);
+                });
+            }
         }
         
-        ctx.lineTo(x, y + height);
+        // Close the shape
+        ctx.lineTo(camX + viewWidth + 10, baseY + layerHeight);
+        ctx.lineTo(camX - 10, baseY + layerHeight);
         ctx.closePath();
         ctx.fill();
     }

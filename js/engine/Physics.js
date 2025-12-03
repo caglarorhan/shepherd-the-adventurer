@@ -99,31 +99,33 @@ export class Physics {
      * Resolve collision between entity and tilemap
      */
     resolveTilemapCollision(entity, tilemap, solidTiles) {
-        const bounds = this.getBounds(entity);
         const tileSize = tilemap.tileSize;
+        
+        // Store previous ground state for stability
+        const wasGrounded = entity.isGrounded;
         
         // Reset ground state
         entity.isGrounded = false;
         entity.isOnPlatform = false;
         
-        // Check horizontal collision first
+        // Resolve horizontal collision first (walls)
         this.resolveHorizontalCollision(entity, tilemap, solidTiles, tileSize);
         
-        // Then check vertical collision
-        this.resolveVerticalCollision(entity, tilemap, solidTiles, tileSize);
+        // Then resolve vertical collision (landing/ceiling)
+        this.resolveVerticalCollision(entity, tilemap, solidTiles, tileSize, wasGrounded);
     }
     
     /**
-     * Resolve horizontal collision
+     * Resolve horizontal collision (walls only)
      */
     resolveHorizontalCollision(entity, tilemap, solidTiles, tileSize) {
         const bounds = this.getBounds(entity);
         
         const left = Math.floor(bounds.x / tileSize);
         const right = Math.floor((bounds.x + bounds.width - 1) / tileSize);
-        // Shrink vertical range by 1 pixel on each end to avoid detecting floor/ceiling as walls
-        const top = Math.floor((bounds.y + 1) / tileSize);
-        const bottom = Math.floor((bounds.y + bounds.height - 2) / tileSize);
+        // Check full height except very bottom (to not detect floor as wall)
+        const top = Math.floor((bounds.y + 2) / tileSize);
+        const bottom = Math.floor((bounds.y + bounds.height - 4) / tileSize);
         
         for (let row = top; row <= bottom; row++) {
             for (let col = left; col <= right; col++) {
@@ -137,16 +139,19 @@ export class Physics {
                     const tileX = col * tileSize;
                     const tileY = row * tileSize;
                     
-                    // Check if actually colliding
                     if (this.checkAABB(bounds, { x: tileX, y: tileY, width: tileSize, height: tileSize })) {
-                        // Resolve based on velocity direction
-                        if (entity.velocityX > 0) {
+                        // Resolve based on which side we're hitting
+                        const entityCenterX = bounds.x + bounds.width / 2;
+                        const tileCenterX = tileX + tileSize / 2;
+                        
+                        if (entityCenterX < tileCenterX) {
+                            // Entity is to the left of tile, push left
                             entity.x = tileX - (entity.hitboxWidth || entity.width) - (entity.hitboxOffsetX || 0);
-                            entity.velocityX = 0;
-                        } else if (entity.velocityX < 0) {
+                        } else {
+                            // Entity is to the right of tile, push right
                             entity.x = tileX + tileSize - (entity.hitboxOffsetX || 0);
-                            entity.velocityX = 0;
                         }
+                        entity.velocityX = 0;
                     }
                 }
             }
@@ -154,20 +159,42 @@ export class Physics {
     }
     
     /**
-     * Resolve vertical collision
+     * Resolve vertical collision (ground/ceiling)
      */
-    resolveVerticalCollision(entity, tilemap, solidTiles, tileSize) {
+    resolveVerticalCollision(entity, tilemap, solidTiles, tileSize, wasGrounded) {
         const bounds = this.getBounds(entity);
         
-        // Use full width for ground detection - no ledge tolerance that causes falling
-        const left = Math.floor(bounds.x / tileSize);
-        const right = Math.floor((bounds.x + bounds.width - 1) / tileSize);
+        // Shrink horizontal check slightly to avoid corner catching
+        const left = Math.floor((bounds.x + 2) / tileSize);
+        const right = Math.floor((bounds.x + bounds.width - 3) / tileSize);
         const top = Math.floor(bounds.y / tileSize);
         const bottom = Math.floor((bounds.y + bounds.height - 1) / tileSize);
         
-        // Also check one row below for ground detection when not moving up
-        const groundCheckRow = Math.floor((bounds.y + bounds.height) / tileSize);
+        // Check ground below first if we were grounded or falling
+        if (wasGrounded || entity.velocityY >= 0) {
+            const groundRow = Math.floor((bounds.y + bounds.height) / tileSize);
+            for (let col = left; col <= right; col++) {
+                if (groundRow < 0 || groundRow >= tilemap.height || col < 0 || col >= tilemap.width) {
+                    continue;
+                }
+                
+                const tileId = tilemap.data[groundRow * tilemap.width + col];
+                if (solidTiles.includes(tileId)) {
+                    const tileY = groundRow * tileSize;
+                    const feetY = bounds.y + bounds.height;
+                    
+                    // If feet are at or below tile top, snap to ground
+                    if (feetY >= tileY && feetY < tileY + 8) {
+                        entity.y = tileY - (entity.hitboxHeight || entity.height) - (entity.hitboxOffsetY || 0);
+                        entity.velocityY = 0;
+                        entity.isGrounded = true;
+                        return; // Done with vertical collision
+                    }
+                }
+            }
+        }
         
+        // Standard collision check for overlapping tiles
         for (let row = top; row <= bottom; row++) {
             for (let col = left; col <= right; col++) {
                 if (row < 0 || row >= tilemap.height || col < 0 || col >= tilemap.width) {
@@ -180,44 +207,20 @@ export class Physics {
                     const tileX = col * tileSize;
                     const tileY = row * tileSize;
                     
-                    // Recalculate bounds after horizontal resolution
+                    // Recalculate bounds
                     const newBounds = this.getBounds(entity);
                     
                     if (this.checkAABB(newBounds, { x: tileX, y: tileY, width: tileSize, height: tileSize })) {
-                        if (entity.velocityY >= 0) {
-                            // Landing on ground (>= 0 to catch standing still too)
+                        if (entity.velocityY > 0) {
+                            // Falling and hit ground
                             entity.y = tileY - (entity.hitboxHeight || entity.height) - (entity.hitboxOffsetY || 0);
                             entity.velocityY = 0;
                             entity.isGrounded = true;
                         } else if (entity.velocityY < 0) {
-                            // Hitting ceiling
+                            // Jumping and hit ceiling
                             entity.y = tileY + tileSize - (entity.hitboxOffsetY || 0);
                             entity.velocityY = 0;
                         }
-                    }
-                }
-            }
-        }
-        
-        // Additional ground check - look directly below the entity
-        if (!entity.isGrounded && entity.velocityY >= 0) {
-            for (let col = left; col <= right; col++) {
-                if (groundCheckRow < 0 || groundCheckRow >= tilemap.height || col < 0 || col >= tilemap.width) {
-                    continue;
-                }
-                
-                const tileId = tilemap.data[groundCheckRow * tilemap.width + col];
-                
-                if (solidTiles.includes(tileId)) {
-                    const tileY = groundCheckRow * tileSize;
-                    const feetY = bounds.y + bounds.height;
-                    
-                    // If feet are very close to ground (within 2 pixels), snap to ground
-                    if (feetY >= tileY - 2 && feetY <= tileY + 2) {
-                        entity.y = tileY - (entity.hitboxHeight || entity.height) - (entity.hitboxOffsetY || 0);
-                        entity.velocityY = 0;
-                        entity.isGrounded = true;
-                        break;
                     }
                 }
             }

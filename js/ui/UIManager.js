@@ -8,7 +8,8 @@ export class UIManager {
     constructor(game) {
         this.game = game;
         this.currentScreen = 'main-menu';
-        this.selectedLevel = 1;
+        // Load selected level from game state if available
+        this.selectedLevel = game.state?.data?.currentLevel || 1;
     }
     
     /**
@@ -241,6 +242,7 @@ export class UIManager {
     startLevel(levelNum) {
         this.selectedLevel = levelNum;
         this.game.state.data.currentLevel = levelNum;
+        this.game.state.save(); // Save current level to localStorage
         
         // Show game screen
         this.showScreen('game-screen');
@@ -273,8 +275,11 @@ export class UIManager {
      * Restart current level
      */
     restartLevel() {
+        // Ensure we have the correct level (from game state if needed)
+        const levelToRestart = this.selectedLevel || this.game.state.data.currentLevel || 1;
+        console.log(`🔄 Restarting level ${levelToRestart}`);
         this.game.stop();
-        this.startLevel(this.selectedLevel);
+        this.startLevel(levelToRestart);
     }
     
     /**

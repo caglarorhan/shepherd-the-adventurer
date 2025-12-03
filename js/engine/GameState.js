@@ -63,7 +63,7 @@ export class GameState {
                     this.data.unlockedLevels = [1];
                 }
                 
-                console.log('💾 Game state loaded');
+                console.log('💾 Game state loaded. Unlocked levels:', this.data.unlockedLevels);
             } else {
                 this.data = JSON.parse(JSON.stringify(this.defaultState));
                 console.log('💾 New game state created');
@@ -186,7 +186,10 @@ export class GameState {
         const result = { ...target };
         
         for (const key in source) {
-            if (source[key] instanceof Object && key in target) {
+            // Arrays should be replaced, not merged
+            if (Array.isArray(source[key])) {
+                result[key] = [...source[key]];
+            } else if (source[key] instanceof Object && key in target && !Array.isArray(target[key])) {
                 result[key] = this.mergeDeep(target[key], source[key]);
             } else {
                 result[key] = source[key];

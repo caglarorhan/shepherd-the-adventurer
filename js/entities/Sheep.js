@@ -94,8 +94,12 @@ export class Sheep extends Entity {
         const dy = leader.y + leader.height - (this.y + this.height);
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance > this.followDistance) {
-            // Move towards leader
+        // Stay behind the leader - minimum safe distance to avoid collision
+        const minDistance = 70;  // Don't get closer than this
+        const maxDistance = 120; // Start moving if farther than this
+        
+        if (distance > maxDistance) {
+            // Move towards leader (fast)
             const speed = this.moveSpeed;
             const dirX = dx / distance;
             
@@ -107,8 +111,19 @@ export class Sheep extends Entity {
                 this.velocityY = -350;
                 this.isGrounded = false;
             }
+        } else if (distance > minDistance) {
+            // Move slowly to maintain formation
+            const speed = this.moveSpeed * 0.4;
+            const dirX = dx / distance;
+            
+            this.velocityX = dirX * speed;
+            this.facingRight = dx > 0;
+        } else if (distance < minDistance - 10) {
+            // Too close - back away from leader
+            const dirX = dx > 0 ? -1 : 1;
+            this.velocityX = dirX * this.moveSpeed * 0.3;
         } else {
-            // Stop when close enough
+            // In the sweet spot - stop
             this.velocityX = 0;
         }
     }

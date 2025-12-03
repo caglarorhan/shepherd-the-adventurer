@@ -107,11 +107,11 @@ export class LevelLoader {
             ],
             enemies: [],
             collectibles: [
-                { x: 200, y: 480, type: 'berry' },
-                { x: 380, y: 380, type: 'berry' },
-                { x: 720, y: 320, type: 'herb' },
-                { x: 1000, y: 420, type: 'berry' },
-                { x: 550, y: 250, type: 'golden-wool' }
+                { x: 6 * ts, y: 16 * ts - 48, type: 'berry' },      // Ground level
+                { x: 12 * ts, y: 12 * ts - 48, type: 'berry' },     // On platform
+                { x: 22 * ts, y: 11 * ts - 48, type: 'herb' },      // On high platform
+                { x: 30 * ts, y: 16 * ts - 48, type: 'berry' },     // Ground level
+                { x: 17 * ts, y: 8 * ts - 48, type: 'golden-wool' } // On highest platform
             ],
             background: {
                 type: 'forest',
@@ -202,12 +202,12 @@ export class LevelLoader {
                 { type: 'wolf', x: 900, y: 18 * ts - 48, patrolRange: 100 }  // Between rivers, safe area
             ],
             collectibles: [
-                { x: 180, y: 18 * ts - 40, type: 'berry' },
-                { x: 350, y: 18 * ts - 40, type: 'herb' },
-                { x: 950, y: 18 * ts - 40, type: 'berry' },
-                { x: 1100, y: 18 * ts - 40, type: 'berry' },
-                { x: 1700, y: 18 * ts - 40, type: 'golden-wool' },
-                { x: 1400, y: 14 * ts - 40, type: 'heart' }  // Heart on platform
+                { x: 180, y: 18 * ts - 48, type: 'berry' },
+                { x: 350, y: 18 * ts - 48, type: 'herb' },
+                { x: 950, y: 18 * ts - 48, type: 'berry' },
+                { x: 1100, y: 18 * ts - 48, type: 'berry' },
+                { x: 1700, y: 18 * ts - 48, type: 'golden-wool' },
+                { x: 1400, y: 14 * ts - 48, type: 'heart' }  // Heart on platform
             ],
             background: {
                 type: 'forest',
@@ -261,22 +261,23 @@ export class LevelLoader {
             },
             playerSpawn: { x: 64, y: 20 * ts - 64 },
             sheep: [
-                { x: 350, y: 20 * ts - 32 },
-                { x: 700, y: 450 },
-                { x: 1100, y: 380 },
-                { x: 1500, y: 480 }
+                { x: 10 * ts, y: 20 * ts - 32 },     // Ground at start
+                { x: 25 * ts, y: 18 * ts - 32 },    // First hill (groundY=18)
+                { x: 55 * ts, y: 19 * ts - 32 },    // Valley (groundY=19)
+                { x: 65 * ts, y: 17 * ts - 32 }     // Second hill (groundY=17)
             ],
             enemies: [
-                { type: 'wolf', x: 400, y: 580, patrolRange: 200 },
-                { type: 'boar', x: 900, y: 520, patrolRange: 150 }
+                { type: 'wolf', x: 15 * ts, y: 20 * ts - 48, patrolRange: 200 },
+                { type: 'boar', x: 45 * ts, y: 20 * ts - 48, patrolRange: 150 }
             ],
             collectibles: [
-                { x: 200, y: 580, type: 'berry' },
-                { x: 450, y: 440, type: 'herb' },
-                { x: 750, y: 500, type: 'berry' },
-                { x: 1000, y: 400, type: 'herb' },
-                { x: 1350, y: 350, type: 'golden-wool' },
-                { x: 1200, y: 13 * 32 - 40, type: 'heart' }  // Heart on high platform
+                { x: 5 * ts, y: 20 * ts - 48, type: 'berry' },
+                { x: 14 * ts, y: 15 * ts - 48, type: 'herb' },    // On platform
+                { x: 30 * ts, y: 18 * ts - 48, type: 'berry' },   // On hill
+                { x: 45 * ts, y: 13 * ts - 48, type: 'herb' },    // On high platform
+                { x: 60 * ts, y: 19 * ts - 48, type: 'berry' },
+                { x: 74 * ts, y: 14 * ts - 48, type: 'golden-wool' },  // On end platform
+                { x: 50 * ts, y: 20 * ts - 48, type: 'heart' }
             ],
             background: {
                 type: 'forest',
@@ -333,26 +334,26 @@ export class LevelLoader {
             },
             playerSpawn: { x: 64, y: 22 * ts - 64 },
             sheep: [
-                { x: 300, y: 22 * ts - 32 },
-                { x: 600, y: 500 },
-                { x: 1000, y: 580 },
-                { x: 1400, y: 450 },
-                { x: 1800, y: 380 }
+                { x: 10 * ts, y: 22 * ts - 32 },     // Start area (groundY=22)
+                { x: 20 * ts, y: 20 * ts - 32 },    // First dip (groundY=20)
+                { x: 50 * ts, y: 21 * ts - 32 },    // Middle area (groundY=21)
+                { x: 65 * ts, y: 19 * ts - 32 },    // Hill (groundY=19)
+                { x: 80 * ts, y: 17 * ts - 32 }     // End hill (groundY=17)
             ],
             enemies: [
-                { type: 'wolf', x: 350, y: 650, patrolRange: 180 },
-                { type: 'wolf', x: 800, y: 600, patrolRange: 200 },
-                { type: 'boar', x: 1200, y: 550, patrolRange: 150 }
+                { type: 'wolf', x: 15 * ts, y: 22 * ts - 48, patrolRange: 180 },
+                { type: 'wolf', x: 40 * ts, y: 22 * ts - 48, patrolRange: 200 },
+                { type: 'boar', x: 60 * ts, y: 19 * ts - 48, patrolRange: 150 }
             ],
             collectibles: [
-                { x: 150, y: 650, type: 'berry' },
-                { x: 400, y: 520, type: 'herb' },
-                { x: 700, y: 480, type: 'berry' },
-                { x: 950, y: 440, type: 'herb' },
-                { x: 1300, y: 400, type: 'berry' },
-                { x: 1600, y: 350, type: 'golden-wool' },
-                { x: 1900, y: 320, type: 'golden-wool' },
-                { x: 1100, y: 13 * 32 - 40, type: 'heart' }  // Heart on platform
+                { x: 5 * ts, y: 22 * ts - 48, type: 'berry' },
+                { x: 10 * ts, y: 17 * ts - 48, type: 'herb' },      // On platform
+                { x: 23 * ts, y: 15 * ts - 48, type: 'berry' },     // On platform
+                { x: 37 * ts, y: 14 * ts - 48, type: 'herb' },      // On platform
+                { x: 53 * ts, y: 16 * ts - 48, type: 'berry' },     // On platform
+                { x: 68 * ts, y: 13 * ts - 48, type: 'golden-wool' }, // On platform
+                { x: 84 * ts, y: 12 * ts - 48, type: 'golden-wool' }, // On end platform
+                { x: 45 * ts, y: 22 * ts - 48, type: 'heart' }
             ],
             background: {
                 type: 'dark-forest',
@@ -409,31 +410,31 @@ export class LevelLoader {
             },
             playerSpawn: { x: 64, y: 24 * ts - 64 },
             sheep: [
-                { x: 250, y: 24 * ts - 32 },
-                { x: 500, y: 620 },
-                { x: 800, y: 540 },
-                { x: 1100, y: 480 },
-                { x: 1500, y: 400 },
-                { x: 2000, y: 300 }
+                { x: 8 * ts, y: 24 * ts - 32 },      // Start (groundY=24)
+                { x: 15 * ts, y: 23 * ts - 32 },    // First slope (groundY=23)
+                { x: 28 * ts, y: 21 * ts - 32 },    // Second tier (groundY=21)
+                { x: 45 * ts, y: 19 * ts - 32 },    // Third tier (groundY=19)
+                { x: 60 * ts, y: 17 * ts - 32 },    // Fourth tier (groundY=17)
+                { x: 85 * ts, y: 13 * ts - 32 }     // Peak (groundY=13)
             ],
             enemies: [
-                { type: 'wolf', x: 400, y: 700, patrolRange: 200 },
-                { type: 'wolf', x: 900, y: 580, patrolRange: 180 },
-                { type: 'boar', x: 1300, y: 500, patrolRange: 200 },
-                { type: 'wolf', x: 1700, y: 420, patrolRange: 150 }
+                { type: 'wolf', x: 12 * ts, y: 24 * ts - 48, patrolRange: 200 },
+                { type: 'wolf', x: 35 * ts, y: 21 * ts - 48, patrolRange: 180 },
+                { type: 'boar', x: 55 * ts, y: 19 * ts - 48, patrolRange: 200 },
+                { type: 'wolf', x: 75 * ts, y: 15 * ts - 48, patrolRange: 150 }
             ],
             collectibles: [
-                { x: 180, y: 720, type: 'berry' },
-                { x: 350, y: 680, type: 'herb' },
-                { x: 600, y: 600, type: 'berry' },
-                { x: 850, y: 520, type: 'herb' },
-                { x: 1000, y: 460, type: 'berry' },
-                { x: 1250, y: 400, type: 'herb' },
-                { x: 1450, y: 360, type: 'golden-wool' },
-                { x: 1800, y: 300, type: 'golden-wool' },
-                { x: 2100, y: 260, type: 'golden-wool' },
-                { x: 700, y: 11 * 32 - 40, type: 'heart' },  // Heart on cliff ledge
-                { x: 1600, y: 9 * 32 - 40, type: 'heart' }   // Heart near peak
+                { x: 5 * ts, y: 24 * ts - 48, type: 'berry' },
+                { x: 18 * ts, y: 23 * ts - 48, type: 'herb' },
+                { x: 27 * ts, y: 18 * ts - 48, type: 'berry' },   // On ledge
+                { x: 42 * ts, y: 15 * ts - 48, type: 'herb' },    // On ledge
+                { x: 58 * ts, y: 13 * ts - 48, type: 'berry' },   // On ledge
+                { x: 72 * ts, y: 11 * ts - 48, type: 'herb' },    // On ledge
+                { x: 50 * ts, y: 19 * ts - 48, type: 'golden-wool' },
+                { x: 70 * ts, y: 15 * ts - 48, type: 'golden-wool' },
+                { x: 90 * ts, y: 9 * ts - 48, type: 'golden-wool' },  // On peak ledge
+                { x: 30 * ts, y: 21 * ts - 48, type: 'heart' },
+                { x: 80 * ts, y: 13 * ts - 48, type: 'heart' }
             ],
             background: {
                 type: 'mountain',
