@@ -23,6 +23,8 @@ export class InputManager {
         // Touch state
         this.touches = [];
         this.touchButtons = {};
+        this.touchButtonsPressed = {};
+        this.touchButtonsReleased = {};
         
         // Key bindings
         this.bindings = {
@@ -36,6 +38,9 @@ export class InputManager {
             pause: ['Escape', 'KeyP'],
             debug: ['F3']
         };
+        
+        // Touch control visibility
+        this.touchControlsEnabled = true;
         
         // Bound event handlers (for removal)
         this.boundHandlers = {};
@@ -70,6 +75,9 @@ export class InputManager {
         // Setup touch controls
         this.setupTouchControls();
         
+        // Detect touch device and show controls
+        this.detectTouchDevice();
+        
         // Prevent context menu on right-click
         window.addEventListener('contextmenu', (e) => {
             const canvas = document.getElementById('game-canvas');
@@ -79,6 +87,51 @@ export class InputManager {
         });
         
         console.log('⌨️ Input manager initialized');
+    }
+    
+    /**
+     * Detect if device supports touch and show controls
+     */
+    detectTouchDevice() {
+        const isTouchDevice = ('ontouchstart' in window) || 
+                              (navigator.maxTouchPoints > 0) ||
+                              (navigator.msMaxTouchPoints > 0);
+        
+        if (isTouchDevice && this.touchControlsEnabled) {
+            this.showTouchControls();
+        }
+    }
+    
+    /**
+     * Show touch controls
+     */
+    showTouchControls() {
+        const touchControls = document.getElementById('touch-controls');
+        if (touchControls) {
+            touchControls.classList.add('active');
+        }
+    }
+    
+    /**
+     * Hide touch controls
+     */
+    hideTouchControls() {
+        const touchControls = document.getElementById('touch-controls');
+        if (touchControls) {
+            touchControls.classList.remove('active');
+        }
+    }
+    
+    /**
+     * Toggle touch controls
+     */
+    setTouchControlsEnabled(enabled) {
+        this.touchControlsEnabled = enabled;
+        if (enabled) {
+            this.detectTouchDevice();
+        } else {
+            this.hideTouchControls();
+        }
     }
     
     /**
@@ -95,13 +148,73 @@ export class InputManager {
         Object.entries(touchButtons).forEach(([id, action]) => {
             const btn = document.getElementById(id);
             if (btn) {
+                // Handle touch start
                 btn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
+                    if (!this.touchButtons[action]) {
+                        this.touchButtonsPressed[action] = true;
+                    }
                     this.touchButtons[action] = true;
-                });
+                    btn.classList.add('pressed');
+                }, { passive: false });
+                
+                // Handle touch end
                 btn.addEventListener('touchend', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     this.touchButtons[action] = false;
+                    this.touchButtonsReleased[action] = true;
+                    btn.classList.remove('pressed');
+                }, { passive: false });
+                
+                // Handle touch cancel
+                btn.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    this.touchButtons[action] = false;
+                    btn.classList.remove('pressed');
+                }, { passive: false });
+                
+                // Handle touch leave (finger moves off button)
+                btn.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    const rect = btn.getBoundingClientRect();
+                    const isInside = touch.clientX >= rect.left && 
+                                    touch.clientX <= rect.right &&
+                                    touch.clientY >= rect.top && 
+                                    touch.clientY <= rect.bottom;
+                    
+                    if (!isInside && this.touchButtons[action]) {
+                        this.touchButtons[action] = false;
+                        btn.classList.remove('pressed');
+                    } else if (isInside && !this.touchButtons[action]) {
+                        this.touchButtons[action] = true;
+                        btn.classList.add('pressed');
+                    }
+                }, { passive: false });
+                
+                // Also support mouse for testing on desktop
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    if (!this.touchButtons[action]) {
+                        this.touchButtonsPressed[action] = true;
+                    }
+                    this.touchButtons[action] = true;
+                    btn.classList.add('pressed');
+                });
+                
+                btn.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    this.touchButtons[action] = false;
+                    this.touchButtonsReleased[action] = true;
+                    btn.classList.remove('pressed');
+                });
+                
+                btn.addEventListener('mouseleave', (e) => {
+                    if (this.touchButtons[action]) {
+                        this.touchButtons[action] = false;
+                        btn.classList.remove('pressed');
+                    }
                 });
             }
         });
@@ -116,6 +229,8 @@ export class InputManager {
         this.keysReleased = {};
         this.mouse.buttonsPressed = {};
         this.mouse.buttonsReleased = {};
+        this.touchButtonsPressed = {};
+        this.touchButtonsReleased = {};
     }
     
     /**
@@ -242,9 +357,13 @@ export class InputManager {
         const keys = this.bindings[action];
         if (!keys) return false;
         
+        // Check keyboard
         for (const key of keys) {
             if (this.keysPressed[key]) return true;
         }
+        
+        // Check touch
+        if (this.touchButtonsPressed[action]) return true;
         
         return false;
     }
@@ -256,9 +375,13 @@ export class InputManager {
         const keys = this.bindings[action];
         if (!keys) return false;
         
+        // Check keyboard
         for (const key of keys) {
             if (this.keysReleased[key]) return true;
         }
+        
+        // Check touch
+        if (this.touchButtonsReleased[action]) return true;
         
         return false;
     }
