@@ -106,7 +106,7 @@
     display: flex;
 }
 
-.touch-left, .touch-right {
+.touch-dpad, .touch-actions {
     display: flex;
     gap: 0.75rem;
     pointer-events: auto;
@@ -492,7 +492,7 @@
         font-size: 1.3rem;
     }
     
-    .touch-left, .touch-right {
+    .touch-dpad, .touch-actions {
         gap: 0.5rem;
     }
     

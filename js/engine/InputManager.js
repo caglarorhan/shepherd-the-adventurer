@@ -25,6 +25,7 @@ export class InputManager {
         this.touchButtons = {};
         this.touchButtonsPressed = {};
         this.touchButtonsReleased = {};
+        this.jumpTouchQueued = false; // Queue for touch jump to ensure it's not missed
         
         // Key bindings
         this.bindings = {
@@ -139,11 +140,14 @@ export class InputManager {
      */
     setupTouchControls() {
         const touchButtons = {
-            'touch-left': 'left',
-            'touch-right': 'right',
-            'touch-jump': 'jump',
-            'touch-action': 'action'
+            'btn-touch-left': 'left',
+            'btn-touch-right': 'right',
+            'btn-touch-jump': 'jump',
+            'btn-touch-action': 'action'
         };
+        
+        // Track jump specifically for better responsiveness
+        this.jumpTouchActive = false;
         
         Object.entries(touchButtons).forEach(([id, action]) => {
             const btn = document.getElementById(id);
@@ -152,11 +156,18 @@ export class InputManager {
                 btn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (!this.touchButtons[action]) {
-                        this.touchButtonsPressed[action] = true;
-                    }
+                    
+                    // Set pressed flag (will be read next frame)
+                    this.touchButtonsPressed[action] = true;
                     this.touchButtons[action] = true;
+                    
+                    // Special handling for jump - queue it
+                    if (action === 'jump') {
+                        this.jumpTouchQueued = true;
+                    }
+                    
                     btn.classList.add('pressed');
+                    console.log(`Touch ${action} pressed`);
                 }, { passive: false });
                 
                 // Handle touch end
@@ -178,6 +189,7 @@ export class InputManager {
                 // Handle touch leave (finger moves off button)
                 btn.addEventListener('touchmove', (e) => {
                     const touch = e.touches[0];
+                    if (!touch) return;
                     const rect = btn.getBoundingClientRect();
                     const isInside = touch.clientX >= rect.left && 
                                     touch.clientX <= rect.right &&
@@ -196,10 +208,11 @@ export class InputManager {
                 // Also support mouse for testing on desktop
                 btn.addEventListener('mousedown', (e) => {
                     e.preventDefault();
-                    if (!this.touchButtons[action]) {
-                        this.touchButtonsPressed[action] = true;
-                    }
+                    this.touchButtonsPressed[action] = true;
                     this.touchButtons[action] = true;
+                    if (action === 'jump') {
+                        this.jumpTouchQueued = true;
+                    }
                     btn.classList.add('pressed');
                 });
                 
@@ -216,6 +229,8 @@ export class InputManager {
                         btn.classList.remove('pressed');
                     }
                 });
+            } else {
+                console.warn(`Touch button not found: ${id}`);
             }
         });
     }
@@ -362,8 +377,14 @@ export class InputManager {
             if (this.keysPressed[key]) return true;
         }
         
-        // Check touch
+        // Check touch pressed
         if (this.touchButtonsPressed[action]) return true;
+        
+        // Check queued jump (more reliable for touch)
+        if (action === 'jump' && this.jumpTouchQueued) {
+            this.jumpTouchQueued = false; // Consume the queued jump
+            return true;
+        }
         
         return false;
     }
